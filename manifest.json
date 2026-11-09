@@ -1,0 +1,9 @@
+{
+  "id": "sample-mod",
+  "name": "Sample mod",
+  "version": "1.0.0",
+  "author": "Kothar",
+  "description": "A minimal community mod: a command that writes a greeting into the chat, and a setting for it.",
+  "api": 1,
+  "uses": ["commands", "settings"]
+}

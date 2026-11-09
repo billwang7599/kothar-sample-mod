@@ -1,0 +1,24 @@
+# Push a tag matching manifest.json's version (v1.2.0 for "1.2.0") and this builds main.mjs, checks it, and publishes
+# manifest.json and main.mjs as the release's assets. Kothar installs from your latest release.
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run check
+      - run: gh release create "$GITHUB_REF_NAME" manifest.json main.mjs --title "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
