@@ -1,13 +1,14 @@
-// Checks the built mod as Kothar will before it runs it: manifest.json is valid, main.mjs is one self-contained ES
-// module whose default export is the mod named in the manifest, and the mod sets nothing its manifest's "uses" doesn't
-// list. Run after npm run build. Host calls are checked by Kothar at runtime, so test them with Install from folder.
+// Checks the built extension as Kothar will before it runs it: manifest.json is valid, main.mjs is one self-contained
+// ES module whose default export is the extension named in the manifest, and the extension sets nothing its manifest's
+// "uses" doesn't list. Run after npm run build. Host calls are checked by Kothar at runtime, so test them with Install
+// from folder.
 import { readFileSync, statSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
 
 const ID = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/
 const VERSION = /^\d{1,6}\.\d{1,6}\.\d{1,6}$/
-const MAX_MOD_BYTES = 5 * 1024 * 1024
-// Kept in step with Kothar's packages/core/src/mods.ts.
+const MAX_EXTENSION_BYTES = 5 * 1024 * 1024
+// Kept in step with Kothar's packages/core/src/extensions.ts.
 const USES = ['tools', 'mcpServers', 'instructions', 'permissions', 'transforms', 'events', 'panels', 'commands', 'settings', 'chats', 'setup', 'readChats', 'sendMessages', 'accounts', 'run']
 const FIELD_USES = {
   tools: 'tools',
@@ -63,19 +64,19 @@ try {
 } catch {
   fail('there is no main.mjs: run npm run build')
 }
-if (size > MAX_MOD_BYTES) fail(`main.mjs is over ${MAX_MOD_BYTES} bytes`)
+if (size > MAX_EXTENSION_BYTES) fail(`main.mjs is over ${MAX_EXTENSION_BYTES} bytes`)
 const source = readFileSync('main.mjs', 'utf8')
 const imported = [...source.matchAll(/(?:^|[\s;])(?:import|export)\b[^'"`]*?\bfrom\s*['"]([^'"]+)['"]|\bimport\s*\(\s*['"]([^'"]+)['"]/g)]
   .map((m) => m[1] ?? m[2])
   .filter((name) => !name.startsWith('node:'))
 if (imported.length) fail(`main.mjs imports ${imported.join(', ')}; bundle everything except node: built-ins`)
 
-const mod = (await import(pathToFileURL('main.mjs').href)).default
-if (!mod || typeof mod !== 'object') fail('main.mjs has no default export')
-if (mod.id !== manifest.id) fail(`the mod's id "${mod.id}" isn't manifest.json's "${manifest.id}"`)
+const extension = (await import(pathToFileURL('main.mjs').href)).default
+if (!extension || typeof extension !== 'object') fail('main.mjs has no default export')
+if (extension.id !== manifest.id) fail(`the extension's id "${extension.id}" isn't manifest.json's "${manifest.id}"`)
 const set = (value) => value !== undefined && !(Array.isArray(value) && value.length === 0)
-const unlisted = [...new Set(Object.entries(FIELD_USES).filter(([field]) => set(mod[field])).map(([, use]) => use))].filter(
+const unlisted = [...new Set(Object.entries(FIELD_USES).filter(([field]) => set(extension[field])).map(([, use]) => use))].filter(
   (use) => !manifest.uses.includes(use),
 )
-if (unlisted.length) fail(`the mod uses ${unlisted.map((u) => `"${u}"`).join(', ')} without listing it in manifest.json`)
+if (unlisted.length) fail(`the extension uses ${unlisted.map((u) => `"${u}"`).join(', ')} without listing it in manifest.json`)
 console.log(`ok   ${manifest.id} ${manifest.version}`)
