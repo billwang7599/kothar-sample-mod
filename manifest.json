@@ -3,7 +3,7 @@
   "name": "Hello",
   "version": "1.1.0",
   "author": "Kothar",
-  "description": "An example community mod: a tab counting the messages in each space, a greeting command, and a tool.",
+  "description": "An example community extension: a tab counting the messages in each space, a greeting command, and a tool.",
   "api": 1,
   "uses": ["panels", "commands", "settings", "tools", "events", "readChats"]
 }

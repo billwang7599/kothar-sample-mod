@@ -1,7 +1,14 @@
-import type { ChatDetail, ChatEntry, Mod, ModContext, ModHost, ModView } from '../types/mod-api.ts'
+import type {
+  ChatDetail,
+  ChatEntry,
+  Extension,
+  ExtensionContext,
+  ExtensionHost,
+  ExtensionView,
+} from '../types/extension-api.ts'
 
-// A community mod is one object, the default export of main.mjs. Every field it sets, and every host call it makes,
-// must be listed in manifest.json's "uses". This one lists:
+// A community extension is one object, the default export of main.mjs. Every field it sets, and every host call it
+// makes, must be listed in manifest.json's "uses". This one lists:
 //   panels     the Hello tab in the right sidebar
 //   commands   "Say hello" in each chat's General tab
 //   settings   the greeting
@@ -16,7 +23,7 @@ const PANEL = 'hello'
 type Counts = { yours: number; replies: number; last?: number }
 
 // What's happened in a chat so far, from its log.
-function countsOf(host: ModHost, chatId: string): Counts {
+function countsOf(host: ExtensionHost, chatId: string): Counts {
   const entries: ChatEntry[] = host.read(chatId)
   const yours = entries.filter((e) => e.type === 'user.message')
   return {
@@ -27,13 +34,13 @@ function countsOf(host: ModHost, chatId: string): Counts {
 }
 
 // The space a chat belongs to: a worker's is its lead's.
-const spaceName = (host: ModHost, chat: ChatDetail) => host.space(chat.id)?.name ?? chat.name
+const spaceName = (host: ExtensionHost, chat: ChatDetail) => host.space(chat.id)?.name ?? chat.name
 
-const greet = (chat: ChatDetail, { values, host }: ModContext) => host.note(chat.id, String(values.greeting))
+const greet = (chat: ChatDetail, { values, host }: ExtensionContext) => host.note(chat.id, String(values.greeting))
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
-function panelView(chat: ChatDetail, { host }: ModContext): ModView {
+function panelView(chat: ChatDetail, { host }: ExtensionContext): ExtensionView {
   const counts = countsOf(host, chat.id)
   return {
     type: 'stack',
@@ -53,16 +60,16 @@ function panelView(chat: ChatDetail, { host }: ModContext): ModView {
         type: 'row',
         children: [{ type: 'button', label: 'Say hello', action: { name: 'greet' }, variant: 'primary' }],
       },
-      { type: 'text', text: 'From the Hello mod, an example community mod.', tone: 'faint', small: true },
+      { type: 'text', text: 'From the Hello extension, an example community extension.', tone: 'faint', small: true },
     ],
   }
 }
 
-const mod: Mod = {
+const extension: Extension = {
   id: ID,
   name: 'Hello',
-  description: 'An example community mod: a tab counting the messages in each space, a greeting command, and a tool.',
-  // Community mods always arrive off, whatever this says; it only matters for built-in mods.
+  description: 'An example community extension: a tab counting the messages in each space, a greeting command, and a tool.',
+  // Community extensions always arrive off, whatever this says; it only matters for built-in extensions.
   enabledByDefault: false,
   settings: [
     {
@@ -70,7 +77,7 @@ const mod: Mod = {
       label: 'Greeting',
       description: 'What Say hello writes into the chat.',
       type: 'text',
-      default: 'Hello from the Hello mod.',
+      default: 'Hello from the Hello extension.',
     },
   ],
   panels: [
@@ -87,7 +94,7 @@ const mod: Mod = {
     {
       id: 'greet',
       label: 'Say hello',
-      hint: "Writes the greeting from this mod's settings into the chat. Agents don't see it.",
+      hint: "Writes the greeting from this extension's settings into the chat. Agents don't see it.",
       run: greet,
     },
   ],
@@ -108,4 +115,4 @@ const mod: Mod = {
   onTurnCompleted: ({ chat }, { host }) => host.refresh(chat.id),
 }
 
-export default mod
+export default extension

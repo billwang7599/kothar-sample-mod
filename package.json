@@ -7,7 +7,7 @@
     "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --outfile=main.mjs",
     "check": "node scripts/check.mjs",
     "typecheck": "tsc -p .",
-    "update-types": "node -e \"fetch('https://raw.githubusercontent.com/billwang7599/kothar/main/packages/mod-api/index.ts').then(r => { if (!r.ok) throw new Error(r.status); return r.text() }).then(t => require('fs').writeFileSync('types/mod-api.ts', '// Kothar\\'s mod API types (MIT), copied from https://github.com/billwang7599/kothar/blob/main/packages/mod-api/index.ts.\\n// npm run update-types copies the latest. Types only: nothing here ends up in main.mjs.\\n\\n' + t))\""
+    "update-types": "node -e \"fetch('https://raw.githubusercontent.com/billwang7599/kothar/main/packages/extension-api/index.ts').then(r => { if (!r.ok) throw new Error(r.status); return r.text() }).then(t => require('fs').writeFileSync('types/extension-api.ts', '// Kothar\\'s extension API types (MIT), copied from https://github.com/billwang7599/kothar/blob/main/packages/extension-api/index.ts.\\n// npm run update-types copies the latest. Types only: nothing here ends up in main.mjs.\\n\\n' + t))\""
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
