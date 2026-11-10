@@ -65,7 +65,7 @@ export type PermissionRequest = Extract<EngineEvent, { type: 'permission.request
 
 export type ChatStatus = 'idle' | 'running' | 'waiting' | 'stopping'
 
-export type ChatSummary = { id: string; name: string; engine: string; parentId?: string; subagent?: boolean }
+export type ChatSummary = { id: string; name: string; engine: string; parentId?: string; worker?: boolean }
 
 // What a mod can know about any chat. A space is a top-level chat; mod is set on a mod's own chat (Home).
 export type ChatDetail = ChatSummary & {
@@ -97,7 +97,7 @@ export type Attachment = { name: string; path: string; mimeType: string; size: n
 export type ChatEntry = { at: string } & (
   // midTurn: sent while a turn ran, and taken in by it at this point (steering).
   | { type: 'user.message'; text: string; attachments?: Attachment[]; midTurn?: true }
-  | { type: 'subagent.report'; text: string; chatId: string; name: string; error?: string }
+  | { type: 'worker.report'; text: string; chatId: string; name: string; error?: string }
   | { type: 'permission.resolved'; requestId: string; allow: boolean; auto?: true }
   | { type: 'question.resolved'; requestId: string; answers?: Answers }
   // panel: clicking the note opens that panel of the mod's.
@@ -145,7 +145,7 @@ export type ModHost = {
   createChat(spec: { name: string; folders?: string[]; files?: string[]; engine?: string }): { id: string }
   // Sends a message as if the user typed it, queued behind a running turn.
   send(chatId: string, text: string): void
-  // Every chat the user can see, spaces and subagents.
+  // Every chat the user can see, spaces and workers.
   chats(): ChatDetail[]
   chat(chatId: string): ChatDetail | undefined
   // The chat's log, oldest first; `last` keeps only the newest entries.
@@ -173,6 +173,10 @@ export type ModHost = {
   // Unlike run, nothing times it out. Everything a mod started stops when the mod is turned off or Kothar quits.
   spawn(command: string, args: string[], options?: ModSpawnOptions): Promise<ModProcess>
   storage: ModStorage
+  // Opens the user's terminal app (a new window or tab) at a folder on this computer, such as a process's working
+  // folder. The folder must be in some space: one of its folders, its work folder or a checkout, or inside one. Rejects
+  // with a short message for the user when it can't (no such folder, the terminal app is missing).
+  openTerminal(path: string): Promise<void>
   // Draws this mod's panels and commands for the chat again, and its open panels: call it when what they show changed.
   // Without a chat, for every chat.
   refresh(chatId?: string): void
@@ -254,6 +258,9 @@ export type ModListItem = {
   label: string
   // A second, quieter line or column.
   detail?: string
+  // A live time since this moment (epoch ms), such as an uptime, in place of detail. The UI ticks it itself, so the mod
+  // needn't redraw the panel to keep it current. Shown as 5s, 2m 5s, 1h 2m, 1d 1h.
+  since?: number
   mono?: boolean
   badges?: { text: string; tone?: ModTone; hint?: string }[]
   // A status dot before the label, in this tone.
@@ -271,6 +278,8 @@ export type ModView =
   | { type: 'heading'; text: string; hint?: string }
   | { type: 'text'; text: string; tone?: ModTone; mono?: boolean; small?: boolean; hint?: string }
   | { type: 'badge'; text: string; tone?: ModTone; hint?: string }
+  // A live time since this moment (epoch ms), ticked by the UI as ModListItem.since is.
+  | { type: 'elapsed'; since: number; tone?: ModTone; mono?: boolean; small?: boolean; hint?: string }
   | {
       type: 'button'
       label: string
@@ -395,5 +404,5 @@ export type ModUse =
   | 'sendMessages'
   // accounts, useAccount
   | 'accounts'
-  // run, spawn
+  // run, spawn, openTerminal
   | 'run'
